@@ -5,7 +5,12 @@ import sklearn
 fpr, tpr, _ = roc_curve(true_labels, pred_labels)
 auc = auc(fpr,tpr)
 
-def make_roc():
+def make_roc(tpr, fpr, auc):
+    '''
+    Make a basic ROC curve with AUC
+    input: true positive rate, false positive rate, area under curve
+    calculated by the sklearn roc_curve function 
+    '''
     fig = plt.figure(1)
     plt.title('ROC Curve')
     plt.plot(fpr, trp, 'b', label='AUC = %0.2f'% auc)
