@@ -14,38 +14,83 @@ from keras import layers
 from keras.models import Model
 
 def get_args():
+    '''
+    if u don't understand this, u dumb
+    '''
     parser = ArgumentParser(description=__doc__)
     parser.add_argument('input_file')
     return parser.parse_args()
 
 def flatten(ds):
+    '''
+    Input: numpy (?) array arranged by event
+    Output: numpy array flattened 
+    '''
     ftype = [(n, float) for n in ds.dtype.names]
     flat = ds.astype(ftype).view(float).reshape(ds.shape + (-1,))
     return flat
     # return flat.swapaxes(1, len(ds.shape))
 
-def run():
-    args = get_args()
+def get_data():
+
+    with h5py.File(args.input_file, 'r') as hdf_file:
+        n_jets = hdf_file['jets'].shape[0]
+        limit = n_jets - batch_size
+        all_jets = hdf_file['jets']
+        all_tracks = hdf_file['tracks']
+
+    #return train_data, test_data, validate_data
+
+
+def generate(batch_size=100):
+    args = get_args()    
+    jet_vars = ['pt', 'eta']
+    trk_vars = ['d0', 'charge']
+
+    with h5py.File(args.input_file, 'r') as hdf_file:
+        n_jets = hdf_file['jets'].shape[0]
+        limit = n_jets - batch_size
+        all_jets = hdf_file['jets']
+        all_tracks = hdf_file['tracks']
+        for start_index in cycle(range(0, limit, batch_size)):
+            sl = slice(start_index,start_index + batch_size)
+            jets = all_jets[sl]
+            tracks = all_tracks[sl,:]
+
+            fl_jets = flatten(jets[jet_vars])
+            fl_trks = flatten(tracks[trk_vars])
+            labels = jets['LabDr_HadF']
+            charge = jets['mv2c10']
+            one_hot = np.vstack([labels == n for n in [0, 4, 5, 15]]).T
+            yield [fl_trks, fl_jets], [one_hot, charge]
+
+def train():
+    '''
+    (current I/O: nothing)
+    Input: training data (how to handle batch processing?)
+    Output: trained model    
+    '''
+    #args = get_args()
 
     jet_vars = ['pt', 'eta']
     trk_vars = ['d0', 'charge']
-    def generate(batch_size=100):
-        with h5py.File(args.input_file, 'r') as hdf_file:
-            n_jets = hdf_file['jets'].shape[0]
-            limit = n_jets - batch_size
-            all_jets = hdf_file['jets']
-            all_tracks = hdf_file['tracks']
-            for start_index in cycle(range(0, limit, batch_size)):
-                sl = slice(start_index,start_index + batch_size)
-                jets = all_jets[sl]
-                tracks = all_tracks[sl,:]
+    #def generate(batch_size=100):
+    #    with h5py.File(args.input_file, 'r') as hdf_file:
+    #        n_jets = hdf_file['jets'].shape[0]
+    #        limit = n_jets - batch_size
+    #        all_jets = hdf_file['jets']
+    #        all_tracks = hdf_file['tracks']
+    #        for start_index in cycle(range(0, limit, batch_size)):
+    #            sl = slice(start_index,start_index + batch_size)
+    #            jets = all_jets[sl]
+    #            tracks = all_tracks[sl,:]
 
-                fl_jets = flatten(jets[jet_vars])
-                fl_trks = flatten(tracks[trk_vars])
-                labels = jets['LabDr_HadF']
-                charge = jets['mv2c10']
-                one_hot = np.vstack([labels == n for n in [0, 4, 5, 15]]).T
-                yield [fl_trks, fl_jets], [one_hot, charge]
+    #            fl_jets = flatten(jets[jet_vars])
+    #            fl_trks = flatten(tracks[trk_vars])
+    #            labels = jets['LabDr_HadF']
+    #            charge = jets['mv2c10']
+    #            one_hot = np.vstack([labels == n for n in [0, 4, 5, 15]]).T
+    #            yield [fl_trks, fl_jets], [one_hot, charge]
 
     model = get_model(len(jet_vars), len(trk_vars))
     # for (trk, jets), (targets, charge) in generate():
@@ -55,7 +100,11 @@ def run():
 
 
 def get_model(n_vx_vars, n_trk_var):
-
+    '''
+    Input: # vertex vars, # track vars
+    (add info about setup?)
+    Output: model (untrained)
+    '''
     # setup inputs
     tracks = layers.Input(shape=(60, n_trk_var), name='tracks')
     vertex = layers.Input(shape=(n_vx_vars,), name='vertices')
@@ -81,4 +130,4 @@ def get_model(n_vx_vars, n_trk_var):
     return model
 
 if __name__ == '__main__':
-    run()
+    train()
