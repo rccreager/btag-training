@@ -5,13 +5,13 @@ import sklearn
 def save_plot(fig, plot_name):
     fig.savefig(plot_name)
 
-def evaluate_performance(model, test_data):
+def evaluate_roc(model, test_data):
     '''
     calculate some interesting stuff for evaluation/plotting
     input: trained model, testing data with true labels
     output true pos, false pos, auc 
     '''
-    #adding a comment for testing    
+    #once the format of the test_data is known, change this!
     pred_labels = model.predict(test_data)
     fpr, tpr, _ = roc_curve(true_labels, pred_labels)
     auc = auc(fpr,tpr)
@@ -23,7 +23,7 @@ def make_roc(model, test_data):
     input: true positive rate, false positive rate, area under curve
     calculated by the sklearn roc_curve function 
     '''
-    tpr, fpr, auc = evaluate_performance(model, test_data)
+    tpr, fpr, auc = evaluate_roc(model, test_data)
     fig = plt.figure(1)
     plt.title('ROC Curve')
     plt.plot(fpr, trp, 'b', label='AUC = %0.2f'% auc)
@@ -35,11 +35,6 @@ def make_roc(model, test_data):
     plt.xlabel('False Positive Rate')
     plt.show()
     save_plot(fig,'ROC.pdf')
-
-def make_train_test():
-    '''
-
-    '''
 
 
 
