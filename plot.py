@@ -36,5 +36,8 @@ def make_roc(model, test_data):
     plt.show()
     save_plot(fig,'ROC.pdf')
 
+def signal_vs_background(model, test_data):
+    '''
 
-
+    '''
+    
