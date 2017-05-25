@@ -2,13 +2,17 @@ import matplotlib as plt
 import sklearn
 
 
+def save_plot(fig, plot_name):
+    fig.savefig(plot_name)
+
 def evaluate_performance(model, test_data):
     '''
     calculate some interesting stuff for evaluation/plotting
     input: trained model, testing data with true labels
     output true pos, false pos, auc 
     '''
-    pred_labels = model.evaluate(test_data)
+    #adding a comment for testing    
+    pred_labels = model.predict(test_data)
     fpr, tpr, _ = roc_curve(true_labels, pred_labels)
     auc = auc(fpr,tpr)
     return tpr, fpr, auc
@@ -30,6 +34,12 @@ def make_roc(model, test_data):
     plt.ylabel('True Positive Rate')
     plt.xlabel('False Positive Rate')
     plt.show()
-    fig.savefig('ROC.pdf')
+    save_plot(fig,'ROC.pdf')
+
+def make_train_test():
+    '''
+
+    '''
+
 
 
