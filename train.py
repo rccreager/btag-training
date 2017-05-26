@@ -24,17 +24,44 @@ def get_args():
     return parser.parse_args()
 
 def flatten(ds):
+    """
+    Returns a flattened NumPy array
+
+    Args:
+        ds (structured NumPy array): A structured n dimensional array
+    Returns:
+        flat (non-structured NumPy array): A "flattened" array of floats with
+                     additional dimension to represent fields in the structure
+    """
     ftype = [(n, float) for n in ds.dtype.names]
     flat = ds.astype(ftype).view(float).reshape(ds.shape + (-1,))
     return flat
 
 def generate(input_file,jet_vars,trk_vars,batch_size=100):
+    """
+    Returns a generator for a keras model
+    (either training or evaluation)
+
+    Args:
+        input_file (str): path to your chosen input file
+        jet_vars (list of strs): list of jet vars to return
+        trk_vars (list of strs): list of track vars to return
+        batch_size (int): number of samples per batch
+    Returns:
+        tuple of flattened numpy arrays with track vars,
+        jet vars, one-hot flavor labels, and mv2c10 value
+    
+
+    """
     #open your hdf5 file
     with h5py.File(input_file, 'r') as hdf_file:
+        #count the # of jets
         n_jets = hdf_file['jets'].shape[0]
+        #avoid partial final batch
         limit = int(n_jets / batch_size) * batch_size
         all_jets = hdf_file['jets']
         all_tracks = hdf_file['tracks']
+        #batch it up!
         for start_index in cycle(range(0, limit, batch_size)):
             sl = slice(start_index,start_index + batch_size)
             jets = all_jets[sl]
@@ -48,7 +75,18 @@ def generate(input_file,jet_vars,trk_vars,batch_size=100):
             yield [fl_trks, fl_jets], [one_hot, charge]
 
 def train(train_file,jet_vars,trk_vars):
+    """
+    Train the model
 
+    Args:
+        train_file (str): path to the training hd5 model
+        jet_vars (list of strs): list of jet vars to be generated
+        trk_vars (list of strs): list of track vars to be generated
+
+    Returns:
+        keras History callback, trained keras model
+    """
+    print(type(jet_vars))
     model = get_model(len(jet_vars), len(trk_vars))
     #checkpointer = ModelCheckpoint(filepath="weights.hdf5", verbose=1, save_best_only=True, monitor='loss')
     train_history = model.fit_generator(generate(train_file,jet_vars,trk_vars), steps_per_epoch=500, callbacks=[],epochs=5)
@@ -56,7 +94,15 @@ def train(train_file,jet_vars,trk_vars):
     return train_history, model   
  
 def get_model(n_jet_vars, n_trk_var):
+    """
+    Make the model
 
+    Args:
+        n_vx_vars (int): The number of jet variables
+        n_trk_var (int): The number of track variables
+    Returns:
+        model (Keras Model): The model
+    """
     # setup inputs
     jets = layers.Input(shape=(n_jet_vars,), name='jets')
     tracks = layers.Input(shape=(60, n_trk_var), name='tracks')
