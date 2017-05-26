@@ -2,6 +2,14 @@ import matplotlib as plt
 import sklearn
 
 
+#def plot():
+#    plt.plot(train_history.history['flavor_acc'])
+#    plt.title('flavor acc')
+#    plt.xlabel('epoch')
+#    plt.ylabel('accuracy')
+#    plt.show()
+
+
 def save_plot(fig, plot_name):
     fig.savefig(plot_name)
 
@@ -23,6 +31,9 @@ def make_roc(model, test_data):
     input: true positive rate, false positive rate, area under curve
     calculated by the sklearn roc_curve function 
     '''
+    
+    
+
     tpr, fpr, auc = evaluate_roc(model, test_data)
     fig = plt.figure(1)
     plt.title('ROC Curve')
